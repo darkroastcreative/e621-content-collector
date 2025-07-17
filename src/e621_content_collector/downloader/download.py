@@ -1,3 +1,4 @@
+import json
 import requests
 from requests import Response
 
@@ -42,8 +43,6 @@ def read_tag_sets() -> set:
         # number of tag sets at once.
         tag_sets = sorted(tag_sets)
 
-        print(f'Tag Sets in read_tag_sets(): {tag_sets}')
-
         return tag_sets
         
 
@@ -81,10 +80,26 @@ def download(tag_set: str) -> None:
         # the way to see if there is more content available to download is to
         # keep requesting additional pages until either we receive a page with
         # no posts or we reach the 750th page (whichever comes first).
+        
+        # Parse the response JSON from the e621 API to a Python object for
+        # processing. This line grabs justs the content of the "posts" property
+        # of the response because that's the part needed to parse and download
+        # the posts referenced in the response.
+        posts = json.loads(response.content)['posts']
+
+        for post in posts:
+            id: int = post['id']
+            url: str = post['file']['url']
+            tags_general = []
+            tags_artist = []
+            tags_contributor = []
+            tags_copyright = []
+            tags_character = []
+            tags_species = []
+            tags_meta = []
+            tags_lore = []
 
 tag_sets = read_tag_sets()
-
-print(f'tag_sets After read_tag_sets(): {tag_sets}')
 
 # Loop through the set of tag sets to download posts associated with each tag
 # set.

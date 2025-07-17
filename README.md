@@ -16,6 +16,8 @@ The first version of this tool is actively being developed from scratch, and as 
 
 ### Planned for a Future Release
 
+- Add user guide.
+- Add exception handling logic.
 - Log what the tool does during each run.
 - Track content you've already downloaded and skip it if it comes up in a new download operation.
 - Blacklist tags representing content that you never want to see included in content downloaded by the tool.

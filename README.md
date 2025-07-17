@@ -16,6 +16,7 @@ The first version of this tool is actively being developed from scratch, and as 
 
 ### Planned for a Future Release
 
+- Add CI/CD pipeline.
 - Add user guide.
 - Add exception handling logic.
 - Log what the tool does during each run.

@@ -2,7 +2,7 @@ argcomplete==3.6.2
 certifi==2025.7.14
 charset-normalizer==3.4.2
 click==8.2.1
--e git+https://github.com/darkroastcreative/e621-content-collector.git@838f9b16cee977bd371fec0032e71dd346b4335f#egg=e621_content_collector
+-e git+https://github.com/darkroastcreative/e621-content-collector.git@60a222376313ad0996b2c20b38228fd886fc03dc#egg=e621_content_collector
 idna==3.10
 markdown-it-py==3.0.0
 mdurl==0.1.2

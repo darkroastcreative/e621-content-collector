@@ -25,8 +25,8 @@ license = "AGPL-3.0-only"
 license-files = ["LICENSE"]
 requires-python = ">=3.12"
 dependencies = [
-  'requests',
-  'typer',
+  "requests",
+  "typer",
 ]
 
 [project.urls]

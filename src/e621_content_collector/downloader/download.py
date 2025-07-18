@@ -9,9 +9,24 @@ from requests import Response
 # should download content with.
 tag_sets: set = {}
 
-# TODO: Document!
-# TODO: Add option for alternative tag_sets.txt file name/location.
 def read_tag_sets() -> set:
+    """Reads the provided tag_sets.txt file to gain a reference for the tag
+    sets to download against.
+
+    ## Notes
+    - A potential enhancement being considered is to provide the user an option
+    to specify a custom tag sets file (rather than using the default
+    tag_sets.txt file that the tool provides). However, this option is not
+    currently available.
+    - Another potential enhancement being considered is to provide the user an
+    option to *not* sort the tag set list. The sorting behavior included in the
+    logic at present is included more as a convenience (it can provide users a
+    reference for how far in their tag set list the tool is when running), but
+    isn't necessary for the tool to run. In addition, the sorting behavior
+    could create performance issues when reading in tag set lists for extremely
+    large lists (though this is likely more of an edge case than something that
+    the typical user would experience).
+    """
     # Declare and initialize a localized version of tag_sets that can be
     # manipulated independent of the "main" set of tag sets.
     tag_sets: set = {}
@@ -37,23 +52,27 @@ def read_tag_sets() -> set:
             # further processing.
             tag_sets.add(tag_set)
 
-        # Sort the set of tag sets. This isn't necessary, but can make it
-        # easier to track download progress.
-        #
-        # TODO: Consider making this optional (with the default being that
-        # tag_sets is not sorted). This could be helpful for more extreme cases
-        # where users are trying to download content associated with a massive
-        # number of tag sets at once.
+        # Sort the set of tag sets.
         tag_sets = sorted(tag_sets)
 
         return tag_sets
         
-
-# TODO: Document!
-# TODO: Consider adding an option where no tag set is specified, which would
-# trigger a download of the latest posts.
-# TODO: Consider adding an option for alternative download location.
 def download_posts(tag_set: str) -> None:
+    """Downloads posts associated with a provided tag set.
+
+    ## Arguments
+    - `tag_set`: A string representing the set of tags to use to search for
+    posts. The format of this string matches what a user would enter if
+    searching for posts directly on e621.
+
+    ## Notes
+    - A potential enhancement being considered is to provide the user an option
+    to download posts without specifying any tags, which would effectively
+    download the latest posts on e621, regardless of how they're tagged.
+    - Another potential enhancement being considered is to provide the user an
+    option to specify a custom download location (where downloaded posts are
+    stored on the local machine).
+    """
     # Replace spaces in the tag set with the URL encoded version of the space
     # character. While this isn't necessarily necessary, it makes requests to
     # the e621 API more proper.
@@ -137,8 +156,14 @@ def download_posts(tag_set: str) -> None:
             # check for the next page of posts.
             page_number += 1
 
-# TODO: Document!
 def run_download() -> None:
+    """Reads in the contents of tag_sets.txt and proceeds to download posts
+    matching each provided tag set.
+
+    ## Notes
+    - Options will likely be added to this method at a later time to allow the
+    user more control over download behavior.
+    """
     # Read the set of tag sets to download against from tag_sets.txt.
     tag_sets = read_tag_sets()
 

@@ -34,6 +34,5 @@ Homepage = "https://github.com/darkroastcreative/e621-content-collector"
 Repository = "https://github.com/darkroastcreative/e621-content-collector"
 Issues = "https://github.com/darkroastcreative/e621-content-collector/issues"
 
-# TODO: Fill out this section once initial CLI functionality is established.
-#[project.scripts]
-# e621-collector = ""
+[project.scripts]
+e621-collector = "e621_content_collector.cli:tool"

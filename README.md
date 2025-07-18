@@ -1,6 +1,8 @@
 # e621 Content Collector
 
-A simple tool for gathering content from e621 for local use. Specify the tags that you'd like to target, run the tool, and let it fetch that content for your enjoyment.
+A simple tool for gathering content from [e621](https://e621.net) for local use. Specify the tags that you'd like to target, run the tool, and let it fetch that content for your enjoyment.
+
+This project is a spiritual successor to [FiddyFive/e621-batch-downloader](https://github.com/FiddyFive/e621-batch-downloader), created in response to the original project's owner being unresponsive to pull requests and issues. This project is not a fork of `FiddyFive/e621-batch-downloader` nor does it use any of its source code, but it does offer similar features for users looking to use a tool that is actively maintained.
 
 ## ⚠️ WARNING
 
@@ -14,6 +16,9 @@ The first version of this tool is actively being developed from scratch, and as 
 
 ### Planned for a Future Release
 
+- Add CI/CD pipeline.
+- Add user guide.
+- Add exception handling logic.
 - Log what the tool does during each run.
 - Track content you've already downloaded and skip it if it comes up in a new download operation.
 - Blacklist tags representing content that you never want to see included in content downloaded by the tool.

@@ -1,6 +1,8 @@
 import json
 import os
+
 import requests
+import typer
 from requests import Response
 
 ## Declare and initialize a set representing the tag sets that the downloader
@@ -51,7 +53,7 @@ def read_tag_sets() -> set:
 # TODO: Consider adding an option where no tag set is specified, which would
 # trigger a download of the latest posts.
 # TODO: Consider adding an option for alternative download location.
-def download(tag_set: str) -> None:
+def download_posts(tag_set: str) -> None:
     # Replace spaces in the tag set with the URL encoded version of the space
     # character. While this isn't necessarily necessary, it makes requests to
     # the e621 API more proper.
@@ -135,9 +137,11 @@ def download(tag_set: str) -> None:
             # check for the next page of posts.
             page_number += 1
 
-tag_sets = read_tag_sets()
+# TODO: Document!
+def run_download() -> None:
+    # Read the set of tag sets to download against from tag_sets.txt.
+    tag_sets = read_tag_sets()
 
-# Loop through the set of tag sets to download posts associated with each tag
-# set.
-for tag_set in tag_sets:
-    download(tag_set=tag_set)
+    # For each tag set, download the posts matching the tag set.
+    for tag_set in tag_sets:
+        download_posts(tag_set=tag_set)

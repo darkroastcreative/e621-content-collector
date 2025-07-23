@@ -1,9 +1,6 @@
 # Build
 dist/
 
-# GitHub
-.github/
-
 # macOS
 .DS_Store
 

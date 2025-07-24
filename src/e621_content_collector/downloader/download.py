@@ -78,6 +78,10 @@ def download_posts(tag_set: str) -> None:
     option to specify a custom download location (where downloaded posts are
     stored on the local machine).
     """
+    # Check whether the downloads directory exists and create it if not.
+    if not os.path.exists(os.path.join(os.getcwd(), 'downloads')):
+        os.mkdir('downloads')
+
     # Replace spaces in the tag set with the URL encoded version of the space
     # character. While this isn't necessarily necessary, it makes requests to
     # the e621 API more proper.

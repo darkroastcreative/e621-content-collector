@@ -78,7 +78,10 @@ def download_posts(tag_set: str) -> None:
     option to specify a custom download location (where downloaded posts are
     stored on the local machine).
     """
-    # Check whether the downloads directory exists and create it if not.
+    # Check whether a "downloads" folder exists in the current working
+    # directory and create it if it doesn't. This directory needs to be present
+    # before downloading post data to avoid an error being thrown while
+    # downloading(in the event that the directory doesn't exist).
     if not os.path.exists(os.path.join(os.getcwd(), 'downloads')):
         os.mkdir('downloads')
 

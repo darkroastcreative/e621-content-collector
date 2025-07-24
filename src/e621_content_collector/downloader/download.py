@@ -34,7 +34,8 @@ def read_tag_sets() -> set:
     # Try to open the tag sets file (tag_sets.txt by default), read its
     # contents in as a set, clean the values read into the set, and sort the
     # set to prepare it for use by the core downloader logic. If the tag sets
-    # file does not exist, create it.
+    # file does not exist, create it. This file is necessary to provide the
+    # tool context for what to download.
     try:
         with open('tag_sets.txt', 'r') as tag_sets_file:
             # Read the tag set file's contents in as a set.

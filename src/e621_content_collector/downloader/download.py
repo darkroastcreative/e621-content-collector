@@ -59,7 +59,7 @@ def read_tag_sets() -> set:
             tag_sets = sorted(tag_sets)
     except FileNotFoundError:
         with open('tag_sets.txt', 'w') as tag_sets_file:
-            tag_sets_file.write()
+            tag_sets_file.write('')
 
     return tag_sets
         

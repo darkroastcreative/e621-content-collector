@@ -31,31 +31,37 @@ def read_tag_sets() -> set:
     # manipulated independent of the "main" set of tag sets.
     tag_sets: set = {}
 
-    # Open the tag sets file (tag_sets.txt by default), read its contents in as
-    # a set, clean the values read into the set, and sort the set to prepare it
-    # for use by the core downloader logic.
-    with open('tag_sets.txt', 'r') as tag_sets_file:
-        # Read the tag set file's contents in as a set.
-        tag_sets = set(tag_sets_file.readlines())
+    # Try to open the tag sets file (tag_sets.txt by default), read its
+    # contents in as a set, clean the values read into the set, and sort the
+    # set to prepare it for use by the core downloader logic. If the tag sets
+    # file does not exist, create it. This file is necessary to provide the
+    # tool context for what to download.
+    try:
+        with open('tag_sets.txt', 'r') as tag_sets_file:
+            # Read the tag set file's contents in as a set.
+            tag_sets = set(tag_sets_file.readlines())
 
-        # Clean the values in the tag sets set by removing newlines. This will
-        # make it easier to use these values in the core downloader logic.
-        for tag_set in tag_sets:
-            # Remove the raw value from the set.
-            tag_sets.remove(tag_set)
+            # Clean the values in the tag sets set by removing newlines. This will
+            # make it easier to use these values in the core downloader logic.
+            for tag_set in tag_sets:
+                # Remove the raw value from the set.
+                tag_sets.remove(tag_set)
 
-            # Replace any escaped newlines with the empty string in the tag
-            # set.
-            tag_set = tag_set.replace('\n', '')
+                # Replace any escaped newlines with the empty string in the tag
+                # set.
+                tag_set = tag_set.replace('\n', '')
 
-            # Added the cleaned version of the tag set back to tag_sets for
-            # further processing.
-            tag_sets.add(tag_set)
+                # Added the cleaned version of the tag set back to tag_sets for
+                # further processing.
+                tag_sets.add(tag_set)
 
-        # Sort the set of tag sets.
-        tag_sets = sorted(tag_sets)
+            # Sort the set of tag sets.
+            tag_sets = sorted(tag_sets)
+    except FileNotFoundError:
+        with open('tag_sets.txt', 'w') as tag_sets_file:
+            tag_sets_file.write('')
 
-        return tag_sets
+    return tag_sets
         
 def download_posts(tag_set: str) -> None:
     """Downloads posts associated with a provided tag set.
@@ -73,6 +79,13 @@ def download_posts(tag_set: str) -> None:
     option to specify a custom download location (where downloaded posts are
     stored on the local machine).
     """
+    # Check whether a "downloads" folder exists in the current working
+    # directory and create it if it doesn't. This directory needs to be present
+    # before downloading post data to avoid an error being thrown while
+    # downloading(in the event that the directory doesn't exist).
+    if not os.path.exists(os.path.join(os.getcwd(), 'downloads')):
+        os.mkdir('downloads')
+
     # Replace spaces in the tag set with the URL encoded version of the space
     # character. While this isn't necessarily necessary, it makes requests to
     # the e621 API more proper.

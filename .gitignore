@@ -1,5 +1,5 @@
-# GitHub
-.github/
+# Build
+dist/
 
 # macOS
 .DS_Store

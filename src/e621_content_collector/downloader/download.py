@@ -61,7 +61,7 @@ def read_tag_file(tag_file_name: str, sort_tags: bool = False, create_file_if_mi
 
             # If desired, sort the tags in the set.
             if sort_tags:
-                tag_sets = sorted(tag_sets)
+                tags = sorted(tags)
     except FileNotFoundError:
         with open(tag_file_name, 'w') as tag_file:
             tag_file.write('')

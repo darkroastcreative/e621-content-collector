@@ -11,11 +11,12 @@ The first version of this tool is actively being developed from scratch, and as 
 ## Features
 
 - Download e621 content based on user-specified tag sets (tag combinations, exactly like what you would enter when searching e621 natively).
+- Blacklist tags representing content that you never want to see included in content downloaded by the tool.
 - Use tool as a standalone CLI (i.e., without requiring the user to run from source or within tools like VS Code).
 
 ### In Development
 
-- Blacklist tags representing content that you never want to see included in content downloaded by the tool.
+- Track content you've already downloaded and skip it if it comes up in a new download operation.
 
 ### Queued for Development
 
@@ -26,7 +27,6 @@ The first version of this tool is actively being developed from scratch, and as 
 ### Ideas for a Future Release
 
 - Add CI/CD pipeline.
-- Track content you've already downloaded and skip it if it comes up in a new download operation.
 - Limit download activity to a certain number of posts.
 - Limit download activity to a certain number of pages.
 - "Smart incremental downloads" (effectively, handle downloads for tag sets that you repeatedly search for in the tool in a more efficient way).

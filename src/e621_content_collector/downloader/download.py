@@ -201,7 +201,7 @@ def download_posts(tag_set: str, blacklisted_tags: set = {}) -> None:
                 # download it. The condition related to null URL values is
                 # present to account for an oddity with the e621 API in which
                 # some posts are included in API responses without URL values.
-                if len(set(tags) & blacklisted_tags) == 0 and url is not None:
+                if len(set(tags) & set(blacklisted_tags)) == 0 and url is not None:
                     # Get the file extension for the post. This will be used to
                     # determine which file extension to use when downloading/saving
                     # the post content locally.

@@ -103,13 +103,18 @@ def read_blacklisted_tags_file() -> set:
     """
     return read_tag_file(tag_file_name='blacklisted_tags.txt', sort_tags=False, create_file_if_missing=True)
         
-def download_posts(tag_set: str) -> None:
+def download_posts(tag_set: str, blacklisted_tags: set = {}) -> None:
     """Downloads posts associated with a provided tag set.
 
     ## Arguments
     - `tag_set`: A string representing the set of tags to use to search for
     posts. The format of this string matches what a user would enter if
     searching for posts directly on e621.
+    - `blacklisted_tags`: A set representing the set of tags which the user has
+    specified as "blacklisted" tags. Similar to how the blacklisting feature on
+    the e621 website works, content including one or more blacklisted tags will
+    not be provided to the user. In this implementation, the tool will simply
+    skip the download step for any posts including blacklisted tags.
 
     ## Notes
     - A potential enhancement being considered is to provide the user an option
@@ -176,23 +181,27 @@ def download_posts(tag_set: str) -> None:
                 # represent the post.
                 url: str = post['file']['url']
 
-                # Extract tag information. This doesn't have an immediate purpose,
-                # as posts returned by the API match the provided tag sets, but
-                # will be used to filter out posts in later versions of this tool.
-                tags_general = post['tags']['general']
-                tags_artist = post['tags']['artist']
-                tags_contributor = post['tags']['contributor']
-                tags_copyright = post['tags']['copyright']
-                tags_character = post['tags']['character']
-                tags_species = post['tags']['species']
-                tags_meta = post['tags']['meta']
-                tags_lore = post['tags']['lore']
+                # Extract tag information into a flattened/unified list of post
+                # tags. This list will be used to identify posts including
+                # blacklisted tags (if any are specified by the user) so posts
+                # matching this criteria aren't downloaded by the tool.
+                tags: list = []
+                tags.extend(post['tags']['general'])
+                tags.extend(post['tags']['artist'])
+                tags.extend(post['tags']['contributor'])
+                tags.extend(post['tags']['copyright'])
+                tags.extend(post['tags']['character'])
+                tags.extend(post['tags']['species'])
+                tags.extend(post['tags']['meta'])
+                tags.extend(post['tags']['lore'])
 
-                # Check whether the URL value is null and proceed to download
-                # the post content if not. This logic is present to account for
-                # an oddity with the e621 API in which sometimes posts are
-                # included without URL values.
-                if url is not None:
+                # Check whether the post includes any blacklisted tags and
+                # whether the URL value for the post is non-null. If the post
+                # includes no blacklisted tags and has a URL value, proceed to
+                # download it. The condition related to null URL values is
+                # present to account for an oddity with the e621 API in which
+                # some posts are included in API responses without URL values.
+                if len(set(tags) & blacklisted_tags) == 0 and url is not None:
                     # Get the file extension for the post. This will be used to
                     # determine which file extension to use when downloading/saving
                     # the post content locally.
@@ -220,6 +229,10 @@ def run_download() -> None:
     # Read the set of tag sets to download against from tag_sets.txt.
     tag_sets = read_tag_sets_file()
 
+    # Read the set of blacklisted tags to skip when downloading content from
+    # e621.
+    blacklisted_tags = read_blacklisted_tags_file()
+
     # For each tag set, download the posts matching the tag set.
     for tag_set in tag_sets:
-        download_posts(tag_set=tag_set)
+        download_posts(tag_set=tag_set, blacklisted_tags=blacklisted_tags)

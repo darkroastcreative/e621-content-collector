@@ -68,7 +68,7 @@ def read_tag_file(tag_file_name: str, sort_tags: bool = False, create_file_if_mi
 
     return tags
 
-def read_tag_sets() -> set:
+def read_tag_sets_file() -> set:
     """Reads the provided tag_sets.txt file to gain a reference for the tag
     sets to download against and returns it for use by other parts of the tool.
 
@@ -88,7 +88,7 @@ def read_tag_sets() -> set:
     """
     return read_tag_file(tag_file_name='tag_sets.txt', sort_tags=True, create_file_if_missing=True)
 
-def read_blacklist() -> set:
+def read_blacklisted_tags_file() -> set:
     """Reads the provided blacklisted_tags.txt file to gain a reference for
     tags that the user does not want included in content downloaded by the
     tool. Tags referenced in this file (and the resulting set) will cause the
@@ -218,7 +218,7 @@ def run_download() -> None:
     user more control over download behavior.
     """
     # Read the set of tag sets to download against from tag_sets.txt.
-    tag_sets = read_tag_sets()
+    tag_sets = read_tag_sets_file()
 
     # For each tag set, download the posts matching the tag set.
     for tag_set in tag_sets:

@@ -14,17 +14,19 @@ The first version of this tool is actively being developed from scratch, and as 
 - Blacklist tags representing content that you never want to see included in content downloaded by the tool.
 - Use tool as a standalone CLI (i.e., without requiring the user to run from source or within tools like VS Code).
 
-### In Development
+### 1.0.0 Roadmap
+
+#### In Development
 
 - Track content you've already downloaded and skip it if it comes up in a new download operation.
 
-### Queued for Development
+#### Queued for Development
 
+- Log what the tool does during each run.
 - Add user guide.
 - Add exception handling logic.
-- Log what the tool does during each run.
 
-### Ideas for a Future Release
+### Ideas for a Future Release (Post-1.0.0)
 
 - Add CI/CD pipeline.
 - Limit download activity to a certain number of posts.

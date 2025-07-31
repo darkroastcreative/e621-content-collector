@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "e621_content_collector"
-version = "0.3.0"
+version = "0.3.1"
 authors = [
   { name="David Urso", email="david@darkroastcreative.co" },
 ]

@@ -8,8 +8,9 @@ dist/
 __pycache__/
 
 # Testing-Related Files
-tag_sets.txt
 blacklisted_tags.txt
+downloads/
+tag_sets.txt
 
 # Visual Studio Code
 .vscode/

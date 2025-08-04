@@ -13,6 +13,7 @@ tag_sets: set = {}
 # ignore/skip when downloading posts from e621.
 blacklisted_tags: set = {}
 
+
 def read_tag_file(tag_file_name: str, sort_tags: bool = False, create_file_if_missing: bool = True) -> set:
     """Reads a provided "tag file" (e.g., tag_sets.txt, blacklisted_tags.txt)
     into a set, cleans the set's contents, and returns the set for use by the
@@ -28,7 +29,7 @@ def read_tag_file(tag_file_name: str, sort_tags: bool = False, create_file_if_mi
     - `create_file_if_missing`: A boolean indicating whether the referenced tag
     file should be created if it does not exist. Defaults to True since some
     tag files are necessary for the tool to run as expected.
-    
+
     ## Notes
     - This function is intentionally generic, as the logic used to read and
     prepare the contents of tag_sets.txt and blacklisted_tags.txt is
@@ -68,6 +69,7 @@ def read_tag_file(tag_file_name: str, sort_tags: bool = False, create_file_if_mi
 
     return tags
 
+
 def read_tag_sets_file() -> set:
     """Reads the provided tag_sets.txt file to gain a reference for the tag
     sets to download against and returns it for use by other parts of the tool.
@@ -88,6 +90,7 @@ def read_tag_sets_file() -> set:
     """
     return read_tag_file(tag_file_name='tag_sets.txt', sort_tags=True, create_file_if_missing=True)
 
+
 def read_blacklisted_tags_file() -> set:
     """Reads the provided blacklisted_tags.txt file to gain a reference for
     tags that the user does not want included in content downloaded by the
@@ -102,7 +105,8 @@ def read_blacklisted_tags_file() -> set:
     not currently available.
     """
     return read_tag_file(tag_file_name='blacklisted_tags.txt', sort_tags=False, create_file_if_missing=True)
-        
+
+
 def download_posts(tag_set: str, blacklisted_tags: set = {}) -> None:
     """Downloads posts associated with a provided tag set.
 
@@ -155,7 +159,8 @@ def download_posts(tag_set: str, blacklisted_tags: set = {}) -> None:
     # more posts available for the specified tag set.
     while page_number < 751 and more_posts_available:
         # Submit a request to the e621 API for posts matching the provided tag set and page number.
-        response: Response = requests.get(url=f'https://e621.net/posts.json?tags={tag_set_string}&page={page_number}', headers=headers)
+        response: Response = requests.get(
+            url=f'https://e621.net/posts.json?tags={tag_set_string}&page={page_number}', headers=headers)
 
         # Process the response from the e621 API.
         if response.status_code == 200:
@@ -217,6 +222,7 @@ def download_posts(tag_set: str, blacklisted_tags: set = {}) -> None:
             # Increment the page number variable so the tool can proceed to
             # check for the next page of posts.
             page_number += 1
+
 
 def run_download() -> None:
     """Reads in the contents of tag_sets.txt and proceeds to download posts

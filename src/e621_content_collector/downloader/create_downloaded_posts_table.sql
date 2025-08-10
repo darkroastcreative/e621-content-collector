@@ -1,4 +1,4 @@
-CREATE TABLE downloaded_posts (
+CREATE TABLE IF NOT EXISTS downloaded_posts (
     id   INTEGER PRIMARY KEY ASC
                  UNIQUE
                  NOT NULL,

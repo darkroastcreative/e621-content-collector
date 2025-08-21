@@ -109,7 +109,7 @@ def read_blacklisted_tags_file() -> set:
     return read_tag_file(tag_file_name='blacklisted_tags.txt', sort_tags=False, create_file_if_missing=True)
 
 
-def download_posts(tag_set: str, blacklisted_tags: set = {}, downloaded_posts_db_cursor: Cursor|None = None) -> None:
+def download_posts(tag_set: str, blacklisted_tags: set = {}, db_cursor: Cursor|None = None) -> None:
     """Downloads posts associated with a provided tag set.
 
     ## Arguments
@@ -121,8 +121,8 @@ def download_posts(tag_set: str, blacklisted_tags: set = {}, downloaded_posts_db
     the e621 website works, content including one or more blacklisted tags will
     not be provided to the user. In this implementation, the tool will simply
     skip the download step for any posts including blacklisted tags.
-    - `downloaded_posts_db_cursor`: A Cursor used to interface with the
-    downloaded posts database.
+    - `db_cursor`: A Cursor used to interface with the tool's supporting
+    database.
 
     ## Notes
     - A potential enhancement being considered is to provide the user an option
@@ -243,18 +243,13 @@ def run_download() -> None:
     # e621.
     blacklisted_tags = read_blacklisted_tags_file()
 
-    # Establish a connection to the downloaded posts database, creating it if
-    # it doesn't exist. This database tracks the posts already downloaded by
-    # the tool so they can be skipped if they come up after they've been
-    # downloaded, making the process of downloading content from e621 more
-    # efficient.
-    downloaded_posts_db_connection: Connection = sqlite3.connect('downloaded_posts.db')
-    # TODO: Consider making the name of this database more generic to make it
-    # easier to expand its purpose later on.
+    # Establish a connection to the tool's supporting database, creating it if
+    # it doesn't exist.
+    db_connection: Connection = sqlite3.connect('e621_content_collector.db')
 
-    # Get a cursor for the downloaded posts database, allowing the tool to
+    # Get a cursor for the tool's supporting database, allowing the tool to
     # interface with the database, including querying and inserting records.
-    downloaded_posts_db_cursor: Cursor = downloaded_posts_db_connection.cursor()
+    db_cursor: Cursor = db_connection.cursor()
 
     # TODO: Check for the existence of the table(s) needed to track which posts
     # have been downloaded so they aren't re-downloaded and create the
@@ -265,4 +260,4 @@ def run_download() -> None:
 
     # For each tag set, download the posts matching the tag set.
     for tag_set in tag_sets:
-        download_posts(tag_set=tag_set, blacklisted_tags=blacklisted_tags, downloaded_posts_db_cursor=downloaded_posts_db_cursor)
+        download_posts(tag_set=tag_set, blacklisted_tags=blacklisted_tags, db_cursor=db_cursor)

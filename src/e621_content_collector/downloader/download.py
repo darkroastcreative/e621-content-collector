@@ -5,8 +5,9 @@ from sqlite3 import Cursor, Connection
 
 import requests
 import typer
-from requests import Response
+from datetime import datetime, timezone
 from importlib import resources
+from requests import Response
 
 # Declare and initialize a set representing the tag sets that the tool should
 # download content with.
@@ -226,7 +227,27 @@ def download_posts(tag_set: str, downloaded_posts: set = {}, blacklisted_tags: s
                     with open(os.path.join(os.getcwd(), 'downloads', f'{id}.{file_extension}'), 'wb') as post_file:
                         post_file.write(post_data)
                     
-                    # TODO: Gather any and all information about the post and its associated tags that hasn't already been gathered and save it to the database.
+                    # Extract the post description and prepare it for insertion
+                    # into the database by either wrapping it in single quotes
+                    # or replacing it with NULL.
+                    description: str = post['description']
+                    description = f'\'{description}\'' if description is not None else 'NULL'
+
+                    # Identify the appropriate timestamp for the downloaed_at field.
+                    downloaded_at: str = datetime.now(tz=timezone.utc).astimezone().isoformat(timespec='milliseconds')
+
+                    # Add the post to the posts table in the database.
+                    db_cursor.execute(f'INSERT INTO posts (id, url, description, rating, width, height, extension, size, created_at, updated_at, downloaded_at) VALUES ({id}, \'{url}\', {description}, \'{post["rating"]}\', {post["file"]["width"]}, {post["file"]["height"]}, \'{post["file"]["ext"]}\', {post["file"]["size"]}, \'{post["created_at"]}\', \'{post["updated_at"]}\', \'{downloaded_at}\');')
+
+                    # Populate the tags and posts_tags_bridge tables with the
+                    # post's tag associations.
+                    for tag in tags:
+                        db_cursor.execute(f'INSERT OR IGNORE INTO tags (id) VALUES (\'{tag}\');')
+                        db_cursor.execute(f'INSERT INTO posts_tags_bridge (post_id, tag_id) VALUES ({id}, \'{tag}\');')
+
+                    # Commit the transaction to the database before moving on
+                    # to the next post.
+                    db_cursor.connection.commit()
 
                     # Add the post to the set of downloaded posts so it isn't
                     # re-downloaded in the future.

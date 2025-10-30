@@ -6,6 +6,7 @@ from sqlite3 import Cursor, Connection
 import requests
 import typer
 from requests import Response
+from importlib import resources
 
 # Declare and initialize a set representing the tag sets that the tool should
 # download content with.
@@ -109,13 +110,15 @@ def read_blacklisted_tags_file() -> set:
     return read_tag_file(tag_file_name='blacklisted_tags.txt', sort_tags=False, create_file_if_missing=True)
 
 
-def download_posts(tag_set: str, blacklisted_tags: set = {}, db_cursor: Cursor|None = None) -> None:
+def download_posts(tag_set: str, downloaded_posts: set = {}, blacklisted_tags: set = {}, db_cursor: Cursor|None = None) -> None:
     """Downloads posts associated with a provided tag set.
 
     ## Arguments
     - `tag_set`: A string representing the set of tags to use to search for
     posts. The format of this string matches what a user would enter if
     searching for posts directly on e621.
+    - `downloaded_posts`: A set representing the set of posts which the user
+    has already downloaded (represented by post IDs).
     - `blacklisted_tags`: A set representing the set of tags which the user has
     specified as "blacklisted" tags. Similar to how the blacklisting feature on
     the e621 website works, content including one or more blacklisted tags will
@@ -204,13 +207,13 @@ def download_posts(tag_set: str, blacklisted_tags: set = {}, db_cursor: Cursor|N
                 tags.extend(post['tags']['meta'])
                 tags.extend(post['tags']['lore'])
 
-                # Check whether the post includes any blacklisted tags and
-                # whether the URL value for the post is non-null. If the post
-                # includes no blacklisted tags and has a URL value, proceed to
-                # download it. The condition related to null URL values is
+                # Check whether the post has been already downloaded, whether
+                # it includes any blacklisted tags, and whether the URL value
+                # for the post is non-null. If all conditions are met, proceed
+                # to download it. The condition related to null URL values is
                 # present to account for an oddity with the e621 API in which
                 # some posts are included in API responses without URL values.
-                if len(set(tags) & set(blacklisted_tags)) == 0 and url is not None:
+                if id not in downloaded_posts and len(set(tags) & set(blacklisted_tags)) == 0 and url is not None:
                     # Get the file extension for the post. This will be used to
                     # determine which file extension to use when downloading/saving
                     # the post content locally.
@@ -222,6 +225,12 @@ def download_posts(tag_set: str, blacklisted_tags: set = {}, db_cursor: Cursor|N
                     # Write the post file to the local machine.
                     with open(os.path.join(os.getcwd(), 'downloads', f'{id}.{file_extension}'), 'wb') as post_file:
                         post_file.write(post_data)
+                    
+                    # TODO: Gather any and all information about the post and its associated tags that hasn't already been gathered and save it to the database.
+
+                    # Add the post to the set of downloaded posts so it isn't
+                    # re-downloaded in the future.
+                    downloaded_posts.add(id)
 
             # Increment the page number variable so the tool can proceed to
             # check for the next page of posts.
@@ -251,13 +260,16 @@ def run_download() -> None:
     # interface with the database, including querying and inserting records.
     db_cursor: Cursor = db_connection.cursor()
 
-    # TODO: Check for the existence of the table(s) needed to track which posts
-    # have been downloaded so they aren't re-downloaded and create the
-    # structure if it doesn't already exist.
+    # Ensure the database has the necessary structure to support the tool's
+    # featureset. This is done by executing a bundled SQL script which creates
+    # a series of tables and supporting indexes if they don't already exist in
+    # e621_content_collector.db.
+    db_cursor.executescript(resources.read_text('e621_content_collector.downloader', 'set_up_database_structure.sql'))
 
-    # TODO: Read in set of post IDs for posts that have already been downloaded
-    # for ease of use later?
+    # SELECT the set of IDs in the posts table to establish an understanding of
+    # which posts have already been downloaded.
+    downloaded_posts: set = set(db_cursor.execute('SELECT id FROM posts').fetchall())
 
     # For each tag set, download the posts matching the tag set.
     for tag_set in tag_sets:
-        download_posts(tag_set=tag_set, blacklisted_tags=blacklisted_tags, db_cursor=db_cursor)
+        download_posts(tag_set=tag_set, downloaded_posts=downloaded_posts, blacklisted_tags=blacklisted_tags, db_cursor=db_cursor)

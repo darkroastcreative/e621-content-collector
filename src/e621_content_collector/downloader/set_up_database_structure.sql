@@ -29,3 +29,21 @@ CREATE TABLE IF NOT EXISTS posts_tags_bridge (
     tag_id  TEXT    REFERENCES tags (id) 
                     NOT NULL
 );
+
+/* Create indexes to optimize queries on the database's tables. */
+CREATE INDEX IF NOT EXISTS idx_posts_id ON posts (
+    id ASC
+);
+
+CREATE INDEX IF NOT EXISTS idx_posts_downloaded_at ON posts (
+    downloaded_at DESC
+);
+
+CREATE INDEX IF NOT EXISTS idx_tags_id ON tags (
+    id ASC
+);
+
+CREATE INDEX IF NOT EXISTS idx_posts_tags_bridge ON posts_tags_bridge (
+    post_id ASC,
+    tag_id  ASC
+);

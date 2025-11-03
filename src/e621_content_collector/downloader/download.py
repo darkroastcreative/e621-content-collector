@@ -231,7 +231,7 @@ def download_posts(tag_set: str, downloaded_posts: set = {}, blacklisted_tags: s
                     # into the database by either wrapping it in single quotes
                     # or replacing it with NULL.
                     description: str = post['description']
-                    description = f'\'{description}\'' if description is not None else 'NULL'
+                    description = f'\'{description.replace("\'", "\'\'")}\'' if description is not None else 'NULL'
 
                     # Identify the appropriate timestamp for the downloaed_at field.
                     downloaded_at: str = datetime.now(tz=timezone.utc).astimezone().isoformat(timespec='milliseconds')
@@ -242,8 +242,9 @@ def download_posts(tag_set: str, downloaded_posts: set = {}, blacklisted_tags: s
                     # Populate the tags and posts_tags_bridge tables with the
                     # post's tag associations.
                     for tag in tags:
-                        db_cursor.execute(f'INSERT OR IGNORE INTO tags (id) VALUES (\'{tag}\');')
-                        db_cursor.execute(f'INSERT INTO posts_tags_bridge (post_id, tag_id) VALUES ({id}, \'{tag}\');')
+                        tag_sanitized: str = tag.replace('\'', '\'\'')
+                        db_cursor.execute(f'INSERT OR IGNORE INTO tags (id) VALUES (\'{tag_sanitized}\');')
+                        db_cursor.execute(f'INSERT INTO posts_tags_bridge (post_id, tag_id) VALUES ({id}, \'{tag_sanitized}\');')
 
                     # Commit the transaction to the database before moving on
                     # to the next post.
@@ -289,7 +290,19 @@ def run_download() -> None:
 
     # SELECT the set of IDs in the posts table to establish an understanding of
     # which posts have already been downloaded.
-    downloaded_posts: set = set(db_cursor.execute('SELECT id FROM posts').fetchall())
+    downloaded_posts_in_db: set = set(db_cursor.execute('SELECT id FROM posts').fetchall())
+    
+    # Declare and initialize an empty set representing posts which have already
+    # been downloaded.
+    downloaded_posts: set = set()
+
+    # Populate downloaded_posts using the set of tuples returned by the SELECT
+    # statement. This is necessary because fetchall() returns a set of tuples
+    # rather than a list or set of just the post IDs.
+    for downloaded_post_tuple in downloaded_posts_in_db:
+        downloaded_posts.add(downloaded_post_tuple[0])
+
+    print(downloaded_posts)
 
     # For each tag set, download the posts matching the tag set.
     for tag_set in tag_sets:

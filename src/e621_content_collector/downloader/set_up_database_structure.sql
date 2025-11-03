@@ -1,3 +1,12 @@
+/* Create a table to track download jobs conducted by the tool. */
+CREATE TABLE IF NOT EXISTS download_jobs (
+    id        INTEGER PRIMARY KEY ASC AUTOINCREMENT
+                      UNIQUE
+                      NOT NULL,
+    tag_set   TEXT    NOT NULL,
+    timestamp TEXT    NOT NULL
+);
+
 /* Create posts table to store information about downloaded posts. */
 CREATE TABLE IF NOT EXISTS posts (
     id            INTEGER PRIMARY KEY ASC
@@ -31,6 +40,18 @@ CREATE TABLE IF NOT EXISTS posts_tags_bridge (
 );
 
 /* Create indexes to optimize queries on the database's tables. */
+CREATE INDEX IF NOT EXISTS idx_download_jobs_id ON download_jobs (
+    id DESC
+);
+
+CREATE INDEX IF NOT EXISTS idx_download_jobs_tag_set ON download_jobs (
+    tag_set ASC
+);
+
+CREATE INDEX IF NOT EXISTS idx_download_jobs_timestamp ON download_jobs (
+    timestamp DESC
+);
+
 CREATE INDEX IF NOT EXISTS idx_posts_id ON posts (
     id ASC
 );

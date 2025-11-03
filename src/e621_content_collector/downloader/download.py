@@ -306,8 +306,6 @@ def run_download() -> None:
     for downloaded_post_tuple in downloaded_posts_in_db:
         downloaded_posts.add(downloaded_post_tuple[0])
 
-    print(downloaded_posts)
-
     # For each tag set, download the posts matching the tag set.
     for tag_set in tag_sets:
         download_posts(tag_set=tag_set, downloaded_posts=downloaded_posts, blacklisted_tags=blacklisted_tags, db_cursor=db_cursor)

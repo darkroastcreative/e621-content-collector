@@ -136,6 +136,10 @@ def download_posts(tag_set: str, downloaded_posts: set = {}, blacklisted_tags: s
     option to specify a custom download location (where downloaded posts are
     stored on the local machine).
     """
+    # Add a record to the download_jobs table in the tool's database to log
+    # that a download job was conducted for the provided tag set.
+    db_cursor.execute(f'INSERT INTO download_jobs (tag_set, timestamp) VALUES (\'{tag_set.replace("\'", "\'\'")}\', \'{datetime.now(tz=timezone.utc).astimezone().isoformat(timespec="milliseconds")}\');')
+
     # Check whether a "downloads" folder exists in the current working
     # directory and create it if it doesn't. This directory needs to be present
     # before downloading post data to avoid an error being thrown while

@@ -1,8 +1,12 @@
 import json
 import os
+import sqlite3
+from sqlite3 import Cursor, Connection
 
 import requests
 import typer
+from datetime import datetime, timezone
+from importlib import resources
 from requests import Response
 
 # Declare and initialize a set representing the tag sets that the tool should
@@ -12,6 +16,7 @@ tag_sets: set = {}
 # Declare and initialize a set representing the tags that the tool should
 # ignore/skip when downloading posts from e621.
 blacklisted_tags: set = {}
+
 
 def read_tag_file(tag_file_name: str, sort_tags: bool = False, create_file_if_missing: bool = True) -> set:
     """Reads a provided "tag file" (e.g., tag_sets.txt, blacklisted_tags.txt)
@@ -28,7 +33,7 @@ def read_tag_file(tag_file_name: str, sort_tags: bool = False, create_file_if_mi
     - `create_file_if_missing`: A boolean indicating whether the referenced tag
     file should be created if it does not exist. Defaults to True since some
     tag files are necessary for the tool to run as expected.
-    
+
     ## Notes
     - This function is intentionally generic, as the logic used to read and
     prepare the contents of tag_sets.txt and blacklisted_tags.txt is
@@ -68,6 +73,7 @@ def read_tag_file(tag_file_name: str, sort_tags: bool = False, create_file_if_mi
 
     return tags
 
+
 def read_tag_sets_file() -> set:
     """Reads the provided tag_sets.txt file to gain a reference for the tag
     sets to download against and returns it for use by other parts of the tool.
@@ -88,6 +94,7 @@ def read_tag_sets_file() -> set:
     """
     return read_tag_file(tag_file_name='tag_sets.txt', sort_tags=True, create_file_if_missing=True)
 
+
 def read_blacklisted_tags_file() -> set:
     """Reads the provided blacklisted_tags.txt file to gain a reference for
     tags that the user does not want included in content downloaded by the
@@ -102,19 +109,24 @@ def read_blacklisted_tags_file() -> set:
     not currently available.
     """
     return read_tag_file(tag_file_name='blacklisted_tags.txt', sort_tags=False, create_file_if_missing=True)
-        
-def download_posts(tag_set: str, blacklisted_tags: set = {}) -> None:
+
+
+def download_posts(tag_set: str, downloaded_posts: set = {}, blacklisted_tags: set = {}, db_cursor: Cursor|None = None) -> None:
     """Downloads posts associated with a provided tag set.
 
     ## Arguments
     - `tag_set`: A string representing the set of tags to use to search for
     posts. The format of this string matches what a user would enter if
     searching for posts directly on e621.
+    - `downloaded_posts`: A set representing the set of posts which the user
+    has already downloaded (represented by post IDs).
     - `blacklisted_tags`: A set representing the set of tags which the user has
     specified as "blacklisted" tags. Similar to how the blacklisting feature on
     the e621 website works, content including one or more blacklisted tags will
     not be provided to the user. In this implementation, the tool will simply
     skip the download step for any posts including blacklisted tags.
+    - `db_cursor`: A Cursor used to interface with the tool's supporting
+    database.
 
     ## Notes
     - A potential enhancement being considered is to provide the user an option
@@ -124,6 +136,10 @@ def download_posts(tag_set: str, blacklisted_tags: set = {}) -> None:
     option to specify a custom download location (where downloaded posts are
     stored on the local machine).
     """
+    # Add a record to the download_jobs table in the tool's database to log
+    # that a download job was conducted for the provided tag set.
+    db_cursor.execute(f'INSERT INTO download_jobs (tag_set, timestamp) VALUES (\'{tag_set.replace("\'", "\'\'")}\', \'{datetime.now(tz=timezone.utc).astimezone().isoformat(timespec="milliseconds")}\');')
+
     # Check whether a "downloads" folder exists in the current working
     # directory and create it if it doesn't. This directory needs to be present
     # before downloading post data to avoid an error being thrown while
@@ -155,7 +171,8 @@ def download_posts(tag_set: str, blacklisted_tags: set = {}) -> None:
     # more posts available for the specified tag set.
     while page_number < 751 and more_posts_available:
         # Submit a request to the e621 API for posts matching the provided tag set and page number.
-        response: Response = requests.get(url=f'https://e621.net/posts.json?tags={tag_set_string}&page={page_number}', headers=headers)
+        response: Response = requests.get(
+            url=f'https://e621.net/posts.json?tags={tag_set_string}&page={page_number}', headers=headers)
 
         # Process the response from the e621 API.
         if response.status_code == 200:
@@ -195,13 +212,13 @@ def download_posts(tag_set: str, blacklisted_tags: set = {}) -> None:
                 tags.extend(post['tags']['meta'])
                 tags.extend(post['tags']['lore'])
 
-                # Check whether the post includes any blacklisted tags and
-                # whether the URL value for the post is non-null. If the post
-                # includes no blacklisted tags and has a URL value, proceed to
-                # download it. The condition related to null URL values is
+                # Check whether the post has been already downloaded, whether
+                # it includes any blacklisted tags, and whether the URL value
+                # for the post is non-null. If all conditions are met, proceed
+                # to download it. The condition related to null URL values is
                 # present to account for an oddity with the e621 API in which
                 # some posts are included in API responses without URL values.
-                if len(set(tags) & set(blacklisted_tags)) == 0 and url is not None:
+                if id not in downloaded_posts and len(set(tags) & set(blacklisted_tags)) == 0 and url is not None:
                     # Get the file extension for the post. This will be used to
                     # determine which file extension to use when downloading/saving
                     # the post content locally.
@@ -213,10 +230,38 @@ def download_posts(tag_set: str, blacklisted_tags: set = {}) -> None:
                     # Write the post file to the local machine.
                     with open(os.path.join(os.getcwd(), 'downloads', f'{id}.{file_extension}'), 'wb') as post_file:
                         post_file.write(post_data)
+                    
+                    # Extract the post description and prepare it for insertion
+                    # into the database by either wrapping it in single quotes
+                    # or replacing it with NULL.
+                    description: str = post['description']
+                    description = f'\'{description.replace("\'", "\'\'")}\'' if description is not None else 'NULL'
+
+                    # Identify the appropriate timestamp for the downloaed_at field.
+                    downloaded_at: str = datetime.now(tz=timezone.utc).astimezone().isoformat(timespec='milliseconds')
+
+                    # Add the post to the posts table in the database.
+                    db_cursor.execute(f'INSERT INTO posts (id, url, description, rating, width, height, extension, size, created_at, updated_at, downloaded_at) VALUES ({id}, \'{url}\', {description}, \'{post["rating"]}\', {post["file"]["width"]}, {post["file"]["height"]}, \'{post["file"]["ext"]}\', {post["file"]["size"]}, \'{post["created_at"]}\', \'{post["updated_at"]}\', \'{downloaded_at}\');')
+
+                    # Populate the tags and posts_tags_bridge tables with the
+                    # post's tag associations.
+                    for tag in tags:
+                        tag_sanitized: str = tag.replace('\'', '\'\'')
+                        db_cursor.execute(f'INSERT OR IGNORE INTO tags (id) VALUES (\'{tag_sanitized}\');')
+                        db_cursor.execute(f'INSERT INTO posts_tags_bridge (post_id, tag_id) VALUES ({id}, \'{tag_sanitized}\');')
+
+                    # Commit the transaction to the database before moving on
+                    # to the next post.
+                    db_cursor.connection.commit()
+
+                    # Add the post to the set of downloaded posts so it isn't
+                    # re-downloaded in the future.
+                    downloaded_posts.add(id)
 
             # Increment the page number variable so the tool can proceed to
             # check for the next page of posts.
             page_number += 1
+
 
 def run_download() -> None:
     """Reads in the contents of tag_sets.txt and proceeds to download posts
@@ -233,6 +278,34 @@ def run_download() -> None:
     # e621.
     blacklisted_tags = read_blacklisted_tags_file()
 
+    # Establish a connection to the tool's supporting database, creating it if
+    # it doesn't exist.
+    db_connection: Connection = sqlite3.connect('e621_content_collector.db')
+
+    # Get a cursor for the tool's supporting database, allowing the tool to
+    # interface with the database, including querying and inserting records.
+    db_cursor: Cursor = db_connection.cursor()
+
+    # Ensure the database has the necessary structure to support the tool's
+    # featureset. This is done by executing a bundled SQL script which creates
+    # a series of tables and supporting indexes if they don't already exist in
+    # e621_content_collector.db.
+    db_cursor.executescript(resources.read_text('e621_content_collector.downloader', 'set_up_database_structure.sql'))
+
+    # SELECT the set of IDs in the posts table to establish an understanding of
+    # which posts have already been downloaded.
+    downloaded_posts_in_db: set = set(db_cursor.execute('SELECT id FROM posts').fetchall())
+    
+    # Declare and initialize an empty set representing posts which have already
+    # been downloaded.
+    downloaded_posts: set = set()
+
+    # Populate downloaded_posts using the set of tuples returned by the SELECT
+    # statement. This is necessary because fetchall() returns a set of tuples
+    # rather than a list or set of just the post IDs.
+    for downloaded_post_tuple in downloaded_posts_in_db:
+        downloaded_posts.add(downloaded_post_tuple[0])
+
     # For each tag set, download the posts matching the tag set.
     for tag_set in tag_sets:
-        download_posts(tag_set=tag_set, blacklisted_tags=blacklisted_tags)
+        download_posts(tag_set=tag_set, downloaded_posts=downloaded_posts, blacklisted_tags=blacklisted_tags, db_cursor=db_cursor)

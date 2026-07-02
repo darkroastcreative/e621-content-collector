@@ -198,6 +198,12 @@ def download_posts(tag_set: str, downloaded_posts: set = {}, blacklisted_tags: s
                 # represent the post.
                 url: str = post['file']['url']
 
+                # Get the file extension for the post. This will be used to
+                # determine which file extension to use when downloading/saving
+                # the post content locally.
+                if url is not None:
+                    file_extension: str = url.split('.')[-1]
+
                 # Extract tag information into a flattened/unified list of post
                 # tags. This list will be used to identify posts including
                 # blacklisted tags (if any are specified by the user) so posts
@@ -211,6 +217,7 @@ def download_posts(tag_set: str, downloaded_posts: set = {}, blacklisted_tags: s
                 tags.extend(post['tags']['species'])
                 tags.extend(post['tags']['meta'])
                 tags.extend(post['tags']['lore'])
+                tags.extend([file_extension])
 
                 # Check whether the post has been already downloaded, whether
                 # it includes any blacklisted tags, and whether the URL value
@@ -219,11 +226,6 @@ def download_posts(tag_set: str, downloaded_posts: set = {}, blacklisted_tags: s
                 # present to account for an oddity with the e621 API in which
                 # some posts are included in API responses without URL values.
                 if id not in downloaded_posts and len(set(tags) & set(blacklisted_tags)) == 0 and url is not None:
-                    # Get the file extension for the post. This will be used to
-                    # determine which file extension to use when downloading/saving
-                    # the post content locally.
-                    file_extension: str = url.split('.')[-1]
-
                     # Get the post data. This will be written to the local machine.
                     post_data: bytes = requests.get(url).content
 

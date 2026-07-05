@@ -198,17 +198,25 @@ def download_posts(tag_set: str, downloaded_posts: set = {}, blacklisted_tags: s
                 # represent the post.
                 url: str = post['file']['url']
 
+                # Declare and initialize a list of tags associated with the
+                # post. This list will be used to identify posts including
+                # blacklisted tags (if any are specified by the user) so posts
+                # matching this criteria aren't downloaded by the tool.
+                tags: list = []
+
                 # Get the file extension for the post. This will be used to
                 # determine which file extension to use when downloading/saving
                 # the post content locally.
                 if url is not None:
                     file_extension: str = url.split('.')[-1]
 
-                # Extract tag information into a flattened/unified list of post
-                # tags. This list will be used to identify posts including
-                # blacklisted tags (if any are specified by the user) so posts
-                # matching this criteria aren't downloaded by the tool.
-                tags: list = []
+                    # Add the file extension to the list of post tags. While
+                    # the file extension is not necessarily a proper tag, it
+                    # can be useful to include in case users wish to exclude
+                    # posts in certain formats (e.g., webm).
+                    tags.extend([file_extension])
+
+                # Extract post tag information into the list of tags.
                 tags.extend(post['tags']['general'])
                 tags.extend(post['tags']['artist'])
                 tags.extend(post['tags']['contributor'])
@@ -217,7 +225,6 @@ def download_posts(tag_set: str, downloaded_posts: set = {}, blacklisted_tags: s
                 tags.extend(post['tags']['species'])
                 tags.extend(post['tags']['meta'])
                 tags.extend(post['tags']['lore'])
-                tags.extend([file_extension])
 
                 # Check whether the post has been already downloaded, whether
                 # it includes any blacklisted tags, and whether the URL value

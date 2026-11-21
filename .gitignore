@@ -10,6 +10,7 @@ __pycache__/
 # Testing-Related Files
 blacklisted_tags.txt
 downloads/
+e621_content_collector.db
 tag_sets.txt
 
 # Visual Studio Code

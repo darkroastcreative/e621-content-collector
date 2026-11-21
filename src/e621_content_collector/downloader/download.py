@@ -177,10 +177,8 @@ def download_posts(tag_set: str, downloaded_posts: set = {}, blacklisted_tags: s
         # Process the response from the e621 API.
         if response.status_code == 200:
             # Parse the response JSON from the e621 API to a Python object for
-            # processing. This line grabs justs the content of the "posts" property
-            # of the response because that's the part needed to parse and download
-            # the posts referenced in the response.
-            posts = json.loads(response.content)['posts']
+            # processing.
+            posts = json.loads(response.content)
 
             if len(posts) > 0:
                 more_posts_available = True
@@ -194,15 +192,15 @@ def download_posts(tag_set: str, downloaded_posts: set = {}, blacklisted_tags: s
                 id: int = post['id']
 
                 # Extract the URL for the source content (image, video, animation,
-                # etc.). The content at this URL will be the content downloaded to
-                # represent the post.
-                url: str = post['file']['url']
+                # etc.) in its original format. The content at this URL will be
+                # the content downloaded to represent the post.
+                url: str = post['files']['original']['url']
 
                 # Declare and initialize a list of tags associated with the
                 # post. This list will be used to identify posts including
                 # blacklisted tags (if any are specified by the user) so posts
                 # matching this criteria aren't downloaded by the tool.
-                tags: list = []
+                tags: list = post['tags']
 
                 # Get the file extension for the post. This will be used to
                 # determine which file extension to use when downloading/saving
@@ -215,16 +213,6 @@ def download_posts(tag_set: str, downloaded_posts: set = {}, blacklisted_tags: s
                     # can be useful to include in case users wish to exclude
                     # posts in certain formats (e.g., webm).
                     tags.extend([file_extension])
-
-                # Extract post tag information into the list of tags.
-                tags.extend(post['tags']['general'])
-                tags.extend(post['tags']['artist'])
-                tags.extend(post['tags']['contributor'])
-                tags.extend(post['tags']['copyright'])
-                tags.extend(post['tags']['character'])
-                tags.extend(post['tags']['species'])
-                tags.extend(post['tags']['meta'])
-                tags.extend(post['tags']['lore'])
 
                 # Check whether the post has been already downloaded, whether
                 # it includes any blacklisted tags, and whether the URL value
@@ -250,7 +238,7 @@ def download_posts(tag_set: str, downloaded_posts: set = {}, blacklisted_tags: s
                     downloaded_at: str = datetime.now(tz=timezone.utc).astimezone().isoformat(timespec='milliseconds')
 
                     # Add the post to the posts table in the database.
-                    db_cursor.execute(f'INSERT INTO posts (id, url, description, rating, width, height, extension, size, created_at, updated_at, downloaded_at) VALUES ({id}, \'{url}\', {description}, \'{post["rating"]}\', {post["file"]["width"]}, {post["file"]["height"]}, \'{post["file"]["ext"]}\', {post["file"]["size"]}, \'{post["created_at"]}\', \'{post["updated_at"]}\', \'{downloaded_at}\');')
+                    db_cursor.execute(f'INSERT INTO posts (id, url, description, rating, width, height, extension, size, created_at, updated_at, downloaded_at) VALUES ({id}, \'{url}\', {description}, \'{post["rating"]}\', {post["files"]["original"]["width"]}, {post["files"]["original"]["height"]}, \'{post["files"]["meta"]["ext"]}\', {post["files"]["meta"]["size"]}, \'{post["created_at"]}\', \'{post["updated_at"]}\', \'{downloaded_at}\');')
 
                     # Populate the tags and posts_tags_bridge tables with the
                     # post's tag associations.
